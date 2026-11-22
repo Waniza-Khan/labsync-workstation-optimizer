@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LabSync — Smart Computer Lab Workstation Capability & Slot Conflict Optimizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- Sticky command bar: brand, live KPIs, simulation controls -->
+<header class="cmd">
+  <div class="brand"><b>Lab<em>Sync</em></b></div>
+  <div class="kpis">
+    <div class="kpi"><span class="mono" id="kReady">0</span><small>Ready PCs</small></div>
+    <div class="kpi"><span class="mono" id="kBook">0</span><small>Active bookings</small></div>
+    <div class="kpi warn"><span class="mono" id="kAlert">0</span><small>Affected alerts</small></div>
+  </div>
+  <div class="sims">
+    <button class="btn" id="bRush">Simulate Peak Lab Rush</button>
+    <button class="btn danger" id="bFail">Simulate Hardware Failure</button>
+    <button class="btn ghost" id="bReset">Reset Lab State</button>
+    <button class="btn ghost" id="bOffers" hidden>🔔 <span id="oN">0</span> offer</button>
+    <button class="btn ghost" id="bUndo" disabled title="Undo (Ctrl+Z)">↶ Undo</button>
+  </div>
+</header>
+
+<div id="prog"></div>
+<!-- Hero: particle field, headline, floating tool cloud (acts as the capability filter) -->
+<section class="hero2" id="top">
+  <canvas id="fx"></canvas>
+  <div class="hero-in">
+    <div class="hero-text">
+      <h1>Hello,<br>this is <em>LabSync</em>,<br>your lab slot optimizer</h1>
+      <p class="dim">Choose the tools you need. All 12 PCs are scored for <span class="mono" id="winLabel">10:00–11:00</span> and the best fit gets the crown. No clashes, no guesswork.</p>
+      <button class="btn primary" id="bStart">Start booking</button>
+    </div>
+    <div class="cloud"><div class="pills" id="pills" aria-label="Tools needed"></div><small class="dim">Tap a tool to filter the matrix</small></div>
+  </div>
+  <div class="cue dim">Scroll</div>
+</section>
+
+<main class="wrap">
+  <div class="orb"></div>
+  <div class="stitle" id="book"><h2>Live <em>matrix</em></h2><p class="dim">Twelve workstations, re-scored the moment tools, time or health change.</p></div>
+
+  <div class="legend">
+    <span><i style="background:var(--ok)"></i>Ready</span><span><i style="background:var(--warn)"></i>Slow</span><span><i style="background:var(--bad)"></i>Out of order</span>
+    <span><i style="background:var(--acc)"></i>Booked slot</span><span class="dim">Faded cards cannot take your current request.</span>
+  </div>
+  <div id="banner" class="banner" hidden></div>
+  <div class="cols">
+    <section class="grid" id="grid" aria-label="Workstations"></section>
+
+    <aside class="panel glass" id="panel">
+      <div class="ptitle"><h2>Book a slot</h2><p class="dim">Three quick steps. Clashes are checked as you type.</p></div>
+      <section class="step"><h3><span class="n">1</span>Who is it for?</h3>
+        <input id="fName" placeholder="Student or session name" maxlength="40" aria-label="Student or session name"></section>
+      <section class="step"><h3><span class="n">2</span>When do you need it?</h3>
+        <div class="two"><label>From<select id="fStart"></select></label><label>To<select id="fEnd"></select></label></div>
+        <button class="btn sm" id="bFind" type="button">✦ Find best time for my tools</button><div id="finder"></div></section>
+      <section class="step"><h3><span class="n">3</span>Tools and PC</h3>
+        <div id="fTools" class="checks"></div>
+        <label>Target PC<select id="fPc"></select></label></section>
+      <div id="diag" class="diag"></div>
+      <button class="btn primary wide" id="bBook">Confirm booking</button>
+    </aside>
+  </div>
+
+  <!-- Live schedule & audit timeline -->
+  <section class="dtsec" id="timeline">
+    <div class="stitle"><h2>Day <em>timeline</em></h2><p class="dim">All 12 PCs across the lab day. Click any empty slot to start a booking there. The shaded band is your current request: green fits, red does not.</p></div>
+    <div class="legend"><span><i style="background:var(--acc)"></i>Confirmed</span><span><i style="background:var(--warn)"></i>At risk</span><span><i style="background:#60a5fa"></i>Reassigned</span><span><i style="background:var(--ok);opacity:.5"></i>Your request fits</span><span><i style="background:var(--bad);opacity:.5"></i>Your request clashes</span></div>
+    <div class="dt-wrap"><div id="dtgrid"></div></div>
+  </section>
+
+  <section class="ansec" id="analytics">
+    <div class="stitle"><h2>Lab <em>analytics</em></h2><p class="dim">Live numbers from today's bookings. Utilization ignores broken PCs and maintenance time.</p></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="agrid"><div class="achart"><h3>PC utilization</h3><div id="aUtil"></div></div><div class="achart"><h3>Bookings by hour</h3><div id="aHours" class="hchart"></div></div><div class="achart"><h3>Tool demand vs supply</h3><div id="aTools"></div></div></div>
+  </section>
+
+  <section class="sched">
+    <div class="schedhead"><div><h2>Live <em>schedule</em></h2><p class="dim">Every booking and its status, grouped by time of day. Cancel any slot in one click.</p></div>
+      <div class="acts"><button class="btn sm" id="bCsv">⭳ Export CSV</button><select id="fFilter"><option value="all">All bookings</option><option value="confirmed">Confirmed</option><option value="risk">At risk / displaced</option><option value="reassigned">Reassigned</option><option value="unassigned">Unassigned</option></select></div></div>
+    <div id="list"></div>
+  </section>
+<section class="wlsec" id="waitlist">
+    <div class="stitle"><h2>Waitlist &amp; <em>offers</em></h2><p class="dim">No PC fits? Join the waitlist from the booking panel. When a slot opens, it is held for the first person in line for 10 minutes. Accept to confirm it, or decline to pass it on.</p></div>
+    <div class="wlgrid"><div><h3 class="sub2">Open offers <span class="cnt" id="cOff">0</span></h3><div id="offers"></div></div><div><h3 class="sub2">In the queue <span class="cnt" id="cQ">0</span></h3><div id="queue"></div></div></div>
+  </section>
+
+  <section class="logsec"><div class="stitle"><h2>Audit <em>log</em></h2><p class="dim">A record of every booking, cancellation, health change and reassignment, newest first.</p></div><div id="log" class="log"></div></section>
+</main>
+<footer class="foot"><div class="foot-in"><div class="brand"><b>Lab<em>Sync</em></b></div>
+  <p class="dim">Smart computer lab workstation capability &amp; slot conflict optimizer</p><button class="btn sm ghost" id="bTest">✓ Run engine self-test</button><p class="made">Made by <b>Waniza Khan</b> and <b>Neha Aslam</b></p></div></footer>
+<div id="toasts" aria-live="polite"></div>
+
+<script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="app.js"></script>
+<script src="fx.js"></script>
+</body>
+</html>
