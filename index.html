@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LabSync — Workstation Optimizer</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js" defer></script>
+  <script src="fx.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">L</span><div><strong>LabSync</strong><small>Workstation Optimizer</small></div></div>
+    <div class="top-actions"><span id="clock"></span><button id="themeBtn" class="icon-btn" title="Toggle theme">◐</button></div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">CONTROL ROOM · 12 WORKSTATIONS</p>
+        <h1>Lab operations, <em>optimized.</em></h1>
+      </div>
+      <div class="hero-stats">
+        <div><strong id="utilValue">0%</strong><span>Utilization</span></div>
+        <div><strong id="activeValue">0</strong><span>Active PCs</span></div>
+        <div><strong id="peakValue">—</strong><span>Peak hour</span></div>
+      </div>
+    </section>
+
+    <section class="toolbar">
+      <label>Booking
+        <input id="bookingName" type="text" placeholder="Student or lab name">
+      </label>
+      <label>PC
+        <select id="bookingPc"></select>
+      </label>
+      <label>Start
+        <select id="bookingStart"></select>
+      </label>
+      <label>End
+        <select id="bookingEnd"></select>
+      </label>
+      <label>Required tools
+        <input id="bookingTools" type="text" placeholder="CAD, GPU">
+      </label>
+      <button id="bookBtn" class="primary">Create booking</button>
+      <button id="undoBtn" class="secondary">Undo <kbd>Ctrl Z</kbd></button>
+    </section>
+
+    <section id="conflictBanner" class="conflict-banner" hidden></section>
+
+    <section class="section-heading">
+      <div><p class="eyebrow">LIVE INVENTORY</p><h2>Workstations</h2></div>
+      <div class="legend"><span><i class="dot available"></i>Available</span><span><i class="dot occupied"></i>In use</span><span><i class="dot offline"></i>Offline</span></div>
+    </section>
+    <section id="pcGrid" class="pc-grid"></section>
+
+    <section class="dashboard-grid">
+      <div class="panel timeline-panel">
+        <div class="panel-heading"><div><p class="eyebrow">08:00—18:00</p><h2>Day timeline</h2></div><button id="exportBtn" class="secondary">Export CSV</button></div>
+        <div id="timeline" class="timeline"></div>
+      </div>
+      <aside class="panel waitlist-panel">
+        <div class="panel-heading"><div><p class="eyebrow">FIFO QUEUE</p><h2>Waitlist</h2></div><span id="waitlistCount" class="count">0</span></div>
+        <div id="waitlist" class="waitlist"></div>
+      </aside>
+    </section>
+
+    <section class="dashboard-grid lower">
+      <div class="panel schedule-panel">
+        <div class="panel-heading"><div><p class="eyebrow">GROUPED BY PC</p><h2>Schedule</h2></div></div>
+        <div id="schedule"></div>
+      </div>
+      <div class="panel analytics-panel">
+        <div class="panel-heading"><div><p class="eyebrow">LAB INSIGHTS</p><h2>Analytics</h2></div></div>
+        <div class="analytics">
+          <div><span>Utilization</span><strong id="analyticsUtil">0%</strong><div class="bar"><i id="utilBar"></i></div></div>
+          <div><span>Tool supply</span><strong id="toolSupply">0%</strong><div class="bar"><i id="supplyBar"></i></div></div>
+          <div><span>Bookings</span><strong id="bookingCount">0</strong></div>
+        </div>
+        <h3>Tool demand</h3><div id="toolDemand" class="tool-demand"></div>
+      </div>
+    </section>
+
+    <section class="dashboard-grid lower">
+      <div class="panel audit-panel">
+        <div class="panel-heading"><div><p class="eyebrow">IMMUTABLE SESSION HISTORY</p><h2>Audit log</h2></div><button id="clearLogBtn" class="ghost">Clear log</button></div>
+        <div id="auditLog" class="audit-log"></div>
+      </div>
+      <div class="panel sim-panel">
+        <div class="panel-heading"><div><p class="eyebrow">ENGINE CHECKS</p><h2>Scenarios</h2></div></div>
+        <button class="sim-btn" data-sim="rush"><span>⚡</span><div><strong>Peak Lab Rush</strong><small>Fill available capacity</small></div></button>
+        <button class="sim-btn" data-sim="failure"><span>!</span><div><strong>Hardware Failure</strong><small>Break down selected PC</small></div></button>
+        <button class="sim-btn" data-sim="reset"><span>↺</span><div><strong>Reset lab</strong><small>Restore demo data</small></div></button>
+        <button id="selfTestBtn" class="secondary full">Run engine self-test</button>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="pcDialog">
+    <form method="dialog">
+      <div class="dialog-heading"><h2 id="dialogTitle">Edit workstation</h2><button value="cancel" class="icon-btn">×</button></div>
+      <label>Status<select id="editStatus"><option value="available">Available</option><option value="occupied">Occupied</option><option value="offline">Offline</option></select></label>
+      <label>Health<input id="editHealth" type="number" min="0" max="100"></label>
+      <label>Tools (comma separated)<input id="editTools"></label>
+      <button id="savePcBtn" value="default" class="primary full">Save workstation</button>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status"></div>
+</body>
+</html>
